@@ -1,27 +1,31 @@
-# Ansible VirtualBox Vagrant Kubernetes 1.22 Containerd and Istio Tutorial (1 master N nodes)
-## Building a Kubernetes Cluster with Vagrant and Ansible
+# Setup of a Kubernetes Cluster on Windows
 
-Tutorial with full source code explaining **how to create a Kubernetes cluster with Ansible and Vagrant** for local development.
+The files included in this branch are used within my master thesis about `Kubernetes Forensics`. The files have been slightly changed and a new README has been provided as well, though the old one is kept [here](original_README.md). All changes can be followed through the commit history. 
 
-See https://www.itwonderlab.com/en/ansible-kubernetes-vagrant-tutorial/
+As already stated, this branch aims to setup a Kubernetes cluster by using Vagrant and Ansible. Features of the WSL2 in windows are leveraged in order to provision the necessary VMs on a Windows host. You may read more about how to use WSL2 in order to provision VirtualBox VMs on Windows with Vagrant and Ansible [here](https://gist.github.com/pr3l14t0r/8b350fc7052ccee30a456596fa017c33).
 
-* 22 Dec 2019: Add information about using a Private Docker Registry as suggested by Brian Quandt.
-* 4 Nov 2019: Install and publish Kubernetes Dashboard under vagrant, with help from Alex Alongi. Add prerequisites section as requested
-* 26 Sep 2019: Update Calico networking and network security to release 3.9
-* 6 June 2019: Fix issue: kubectl was not able to recover logs. See new task “Configure node-ip … at kubelet”.
-* 10 Jul 2020:
-        Update prerequisites to latest releases
-        It now takes above 2 minutes
-        Change selection of hosts from Ansible groups to host-name pattern (hosts: k8s-m-* and hosts: k8s-n-*)
-* 3 Aug 2020: Allow different amount of CPU and MEM for master and nodes
-* 10 June 2021: Update host software dependencies (no changes in ansible or vagrant)
-* 16 August 2021: Update Ansible playbooks to use containerd instead of Docker (Kubernetes is deprecating Docker as a container runtime after v1.20.). 
+When the cluster has been installed, you can fetch the `kubeconfig` file from the master node (vm) and add its path to an environment variable, in order to use it with `kubectl`. 
 
+PowerShell commands: 
+```powershell
+# scp is natevily available in PowerShell and PowerShell Core
+scp -P 2222 vagrant@127.0.0.1:/home/vagrant/.kube/config C:\Path\To\The\KubeConfig
 
-------------------
+# Set the environment variable
+$Env:KUBECONFIG += ";C:\Path\To\The\KubeConfig"
 
-## Creación de un Clúster de Kubernetes 1.22 Containerd e Istio usando Vagrant y Ansible (1 maestro N nodos)
+# This did add the fresh exported KubeConfig to your KUBECONFIG env. variable.
+# List the available configs now with kubectl
+kubectl config get-contexts
 
-Creación de un **clúster Kubernetes con múltiples nodos usando Vagrant, Ansible y Virtualbox**. Especialmente indicado para entornos de desarrollo local realistas.
+# choose the one you want to use for your session
+kubectl config use-context kubernetes-admin@kubernetes-forensics
 
-See https://www.itwonderlab.com/es/cluster-kubernetes-vagrant-ansible/
+# Test it with getting information about all pods
+kubectl get Pods -A
+
+# Or the overview of all nodes within the cluster
+kubectl get nodes
+```
+
+Having the `kubeconfig` file exported to the host system and therefore being able to interact with the cluster provided on the VMs, everything is set up. \m/
