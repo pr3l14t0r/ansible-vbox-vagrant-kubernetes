@@ -1,4 +1,5 @@
-IMAGE_NAME = "bento/ubuntu-20.04"
+IMAGE_NAME = "generic/ubuntu2004"
+IMAGE_VERSION = "3.4.0"
 K8S_NAME = "kubernetes-forensics"
 
 # Stats for master node(s)
@@ -11,7 +12,7 @@ NODES_NUM = 1
 NODES_CPU = 2
 NODES_MEM = 4096
 
-IP_BASE = "192.168.50."
+IP_BASE = "192.168.56."
 
 VAGRANT_DISABLE_VBOXSYMLINKCREATE=1
 
@@ -20,6 +21,11 @@ VAGRANT_DISABLE_VBOXSYMLINKCREATE=1
 SECURE_SSH_PRIVATE_KEY = "~/.ssh/k8sDeploy"
 
 Vagrant.configure("2") do |config|
+
+    # specifiy same image and version for each machine 
+    config.vm.box = IMAGE_NAME
+    config.vm.box_version = IMAGE_VERSION
+    #config.disksize.size = '60GB'
     config.ssh.insert_key = false
 
     # Insert own ssh key to the machines. 
@@ -36,10 +42,12 @@ Vagrant.configure("2") do |config|
        SHELL
      end
 
+    # update the machines and disable updater afterwards (thanks @ bento!)
+    config.vm.provision "shell", path: "disableUpdates.sh"
+
     # Provisionign of the master node(s)
     (1..MASTERS_NUM).each do |i|      
         config.vm.define "k8s-m-#{i}" do |master|
-            master.vm.box = IMAGE_NAME
             master.vm.network "private_network", ip: "#{IP_BASE}#{i + 10}"
             master.vm.hostname = "k8s-m-#{i}"
             master.vm.provider "virtualbox" do |v|
@@ -65,7 +73,6 @@ Vagrant.configure("2") do |config|
     # Provisioning of the worker node(s)
     (1..NODES_NUM).each do |j|
         config.vm.define "k8s-n-#{j}" do |node|
-            node.vm.box = IMAGE_NAME
             node.vm.network "private_network", ip: "#{IP_BASE}#{j + 10 + MASTERS_NUM}"
             node.vm.hostname = "k8s-n-#{j}"
             node.vm.provider "virtualbox" do |v|
